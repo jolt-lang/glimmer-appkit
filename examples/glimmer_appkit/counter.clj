@@ -1,4 +1,4 @@
-(ns glimmer-uikit.counter
+(ns glimmer-appkit.counter
   "A reactive counter — the canonical reagent-style demo over AppKit.
 
   Local state lives in a reactive atom created once (Form-2 component). Clicking
@@ -6,7 +6,7 @@
   label widget is updated in place. Try `jolt counter` (the :counter task)."
   (:require [glimmer.ratom :as r :refer [atom]]
             [glimmer.core :as ui]
-            [glimmer-uikit.core]))   ; installs the AppKit backend
+            [glimmer-appkit.core]))   ; installs the AppKit backend
 
 (defn counter
   "Form-2: outer fn creates state once, inner fn renders."

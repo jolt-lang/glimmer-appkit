@@ -1,4 +1,4 @@
-(ns glimmer-uikit.main-thread-smoke
+(ns glimmer-appkit.main-thread-smoke
   "Regression smoke for the macOS main-thread rule.
 
   Mirrors the `jolt --nrepl-server` topology: the app's run() is invoked on a
@@ -9,7 +9,7 @@
 
   Auto-quits after 1.2s. Exit 0 (printing SMOKE OK) = no crash."
   (:require [glimmer.core :as ui]
-            [glimmer-uikit.core]
+            [glimmer-appkit.core]
             [jolt.host :as host]))
 
 (defn root []

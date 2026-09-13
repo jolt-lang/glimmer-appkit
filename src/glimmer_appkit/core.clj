@@ -1,18 +1,17 @@
-(ns glimmer-uikit.core
-  "The AppKit backend for glimmer (the macOS native toolkit — 'uikit' names this
-  project, not the iOS framework). Requiring this namespace installs it, after
-  which glimmer's portable reconciler (glimmer.core) renders hiccup into real
-  AppKit views:
+(ns glimmer-appkit.core
+  "The AppKit backend for glimmer (the macOS native toolkit). Requiring this
+  namespace installs it, after which glimmer's portable reconciler (glimmer.core)
+  renders hiccup into real AppKit views:
 
     (ns myapp
       (:require [glimmer.ratom :refer [atom]]
                 [glimmer.core :as ui]
-                [glimmer-uikit.core]))          ; installs the AppKit backend
+                [glimmer-appkit.core]))          ; installs the AppKit backend
 
     (defn -main [& _] (ui/run my-app :title \"hello\"))
 
   What this namespace supplies to glimmer.backend is the toolkit half of the
-  seam: element creation and prop application (glimmer-uikit.widget), container
+  seam: element creation and prop application (glimmer-appkit.widget), container
   child management, the app loop, and the marshalling of off-thread work onto
   that loop.
 
@@ -24,8 +23,8 @@
   without needing libdispatch or blocks (a source's perform callback is a plain
   C function pointer)."
   (:require [glimmer.backend :as b]
-            [glimmer-uikit.ffi :as u]
-            [glimmer-uikit.widget :as w]
+            [glimmer-appkit.ffi :as u]
+            [glimmer-appkit.widget :as w]
             [jolt.ffi :as ffi]))
 
 ;; --- marshalling work onto the AppKit main loop ------------------------------
@@ -44,7 +43,7 @@
                       (run! (fn [f]
                               (try (f)
                                    (catch :default e
-                                     (println "glimmer-uikit: scheduled work failed:" e))))
+                                     (println "glimmer-appkit: scheduled work failed:" e))))
                             jobs)))
                   [:pointer] :void :collect-safe)
         ;; CFRunLoopSourceContext on arm64 (all 8-byte fields):
@@ -141,7 +140,7 @@
 (def backend
   "The AppKit backend map handed to glimmer.backend/register!. See that
   namespace for the contract each key satisfies."
-  {:name           :uikit
+  {:name           :appkit
    :create!        w/create!
    :apply-props!   w/apply-props!
    :append-child!  w/append-child!

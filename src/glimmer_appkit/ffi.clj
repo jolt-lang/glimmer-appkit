@@ -1,4 +1,4 @@
-(ns glimmer-uikit.ffi
+(ns glimmer-appkit.ffi
   "Raw bindings for the Objective-C runtime and AppKit, built on jolt.ffi.
 
   Objective-C from a C FFI: classes come from objc_getClass, selectors from
@@ -15,7 +15,7 @@
   AppKit.framework is dlopen'd here on macOS so its classes register
   (objc_getClass only finds classes in loaded frameworks). On other platforms
   the load is skipped and only the headless helpers (markup, with-orientation
-  in glimmer-uikit.widget) are usable — which is what the CI unit tests need.
+  in glimmer-appkit.widget) are usable — which is what the CI unit tests need.
 
   Marshalling: a C string crosses the FFI as :string (UTF-8); NSStrings are
   created with stringWithUTF8String: and read back with UTF8String. BOOL is
@@ -29,7 +29,7 @@
     (ffi/load-library "/System/Library/Frameworks/AppKit.framework/AppKit")
     (ffi/load-library "/System/Library/Frameworks/Foundation.framework/Foundation")
     (catch :default _
-      (println "glimmer-uikit: could not load AppKit.framework; headless helpers only"))))
+      (println "glimmer-appkit: could not load AppKit.framework; headless helpers only"))))
 
 ;; --- constants ---------------------------------------------------------------
 ;; NSWindowStyleMask: titled | closable | miniaturizable | resizable
@@ -230,7 +230,7 @@
       (let [nm (try (nsstring->str (objc-msg-send-0 exc (sel "name"))) (catch :default _ "NSException"))
             why (try (nsstring->str (objc-msg-send-0 exc (sel "reason"))) (catch :default _ ""))]
         (binding [*out* *err*]
-          (println (str "glimmer-uikit: uncaught " nm ": " why))
+          (println (str "glimmer-appkit: uncaught " nm ": " why))
           (println "  the process aborts now; the Objective-C exception cannot be caught from jolt.")
           (when-let [dump (resolve 'jolt.host/backtrace-string)]
             (when-let [bt (try (dump) (catch :default _ nil))]
@@ -417,7 +417,7 @@
     (cond (<= 48 n 57) (- n 48)
           (<= 97 n 102) (- n 87)
           (<= 65 n 70) (- n 55)
-          :else (throw (ex-info (str "glimmer-uikit: bad hex digit " c) {})))))
+          :else (throw (ex-info (str "glimmer-appkit: bad hex digit " c) {})))))
 (defn- hex->int [s] (reduce (fn [acc c] (+ (* acc 16) (hex-digit c))) 0 s))
 (defn color-hex
   "Parse \"#rrggbb\" (or \"#rgb\") into an NSColor."

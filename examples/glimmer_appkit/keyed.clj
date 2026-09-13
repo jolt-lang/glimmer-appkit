@@ -1,4 +1,4 @@
-(ns glimmer-uikit.keyed
+(ns glimmer-appkit.keyed
   "Non-interactive proof that glimmer's keyed reconciliation reuses widgets across
   add/remove/reorder instead of recreating them by position. Mounts a vbox of
   labels keyed by a stable :id, then mutates the backing list — reverse, remove a
@@ -15,8 +15,8 @@
   Exits non-zero on any failed check."
   (:require [glimmer.ratom :refer [atom]]
             [glimmer.core :as ui]
-            [glimmer-uikit.core :as uikit]
-            [glimmer-uikit.widget :as w]))
+            [glimmer-appkit.core :as appkit]
+            [glimmer-appkit.widget :as w]))
 
 (def items (atom [{:id :a :text "alpha"}
                   {:id :b :text "bravo"}
@@ -91,7 +91,7 @@
   (let [w0 (key->widget root)]
     (check-order! root [:a :b :c] w0 "baseline")
     (letfn [(step [i]
-              (uikit/schedule!
+              (appkit/schedule!
                 (fn []
                   (case i
                     0 (do (reset! items [{:id :c :text "charlie"}
@@ -115,23 +115,23 @@
                             (record! (not (contains? w0 (now :d))) "insert :d-is-new"))
                           (checkbutton-suppression!)
                           (reset! result (if (empty? @failures) :pass :fail))
-                          (uikit/quit!))))))]
+                          (appkit/quit!))))))]
       (step 0))))
 
 (defn- driver [root]
-  (uikit/schedule!
+  (appkit/schedule!
     (fn []
       (try (run-checks! root)
            (reset! result (if (empty? @failures) :pass :fail))
            (catch :default e
              (reset! result :fail)
              (swap! failures conj (str "threw: " e))))
-      (uikit/quit!))))
+      (appkit/quit!))))
 
 (defn -main [& _]
   (try
-    (uikit/schedule!   ; first drain warms the loop; the driver fires next
-      (fn [] (driver (uikit/root-inst))))
+    (appkit/schedule!   ; first drain warms the loop; the driver fires next
+      (fn [] (driver (appkit/root-inst))))
     (ui/run app :title "keyed smoke" :width 240 :height 180 :auto-quit-ms 5000)
     (prn :keyed :result @result :failures @failures)
     (when (not= :pass @result)

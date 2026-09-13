@@ -1,10 +1,10 @@
-(ns glimmer-uikit.smoke
+(ns glimmer-appkit.smoke
   "Non-interactive smoke test: mount the counter demo into a real AppKit window
   and auto-quit after 1.2s. Exit 0 only if the whole pipeline (framework load,
   app loop, widget mount, signal wiring, clean shutdown) ran without throwing."
-  (:require [glimmer-uikit.counter :as counter]
+  (:require [glimmer-appkit.counter :as counter]
             [glimmer.core :as ui]
-            [glimmer-uikit.core]))   ; installs the AppKit backend
+            [glimmer-appkit.core]))   ; installs the AppKit backend
 
 (defn -main [& _]
   (try

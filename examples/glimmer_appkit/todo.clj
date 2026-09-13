@@ -1,4 +1,4 @@
-(ns glimmer-uikit.todo
+(ns glimmer-appkit.todo
   "A task board demo. Exercises a derived reaction (the counts), an expanding
   entry (:on-change / :on-activate, with a placeholder), checkbutton toggles, and
   list rendering inside a frame — the AppKit counterparts of the GTK widgets.
@@ -9,7 +9,7 @@
   exit (the shared invoker answers applicationShouldTerminateAfterLastWindowClosed:)."
   (:require [glimmer.ratom :as r :refer [atom reaction]]
             [glimmer.core :as ui]
-            [glimmer-uikit.core]))   ; installs the AppKit backend
+            [glimmer-appkit.core]))   ; installs the AppKit backend
 
 ;; A small "stat card": a big number over a muted label.
 (defn- stat-card [n label]

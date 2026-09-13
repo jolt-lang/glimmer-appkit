@@ -5,12 +5,12 @@
 
  :paths ["src"]
 
- ;; glimmer-uikit is the native macOS (AppKit) backend for glimmer: glimmer owns
+ ;; glimmer-appkit is the native macOS (AppKit) backend for glimmer: glimmer owns
  ;; the reactive core (ratom, component model, reconciler) and knows nothing
  ;; about any toolkit; this project supplies the widgets, the prop/event wiring
  ;; and the app loop, and registers them through glimmer.backend.
  ;;
- ;; AppKit itself is NOT declared under :jolt/native — glimmer-uikit.ffi loads
+ ;; AppKit itself is NOT declared under :jolt/native — glimmer-appkit.ffi loads
  ;; the frameworks itself, guarded to macOS only. That keeps `jolt -M:test`
  ;; (the headless markup/string tests) runnable on Linux CI, where no AppKit
  ;; exists; on macOS the dlopen happens at require time, before any class is
@@ -27,13 +27,13 @@
 
  ;; Each runnable has its own alias with :main-opts (jolt's -M:alias form needs
  ;; main-opts). Tasks are thin wrappers so you can run `jolt counter`, etc.
- :aliases {:test    {:extra-paths ["test"]     :main-opts ["-m" "glimmer-uikit.test-runner"]}
-           :counter {:extra-paths ["examples"] :main-opts ["-m" "glimmer-uikit.counter"]}
-           :todo    {:extra-paths ["examples"] :main-opts ["-m" "glimmer-uikit.todo"]}
-           :smoke   {:extra-paths ["examples"] :main-opts ["-m" "glimmer-uikit.reactivity-smoke"]}
-           :main-thread-smoke {:extra-paths ["examples"] :main-opts ["-m" "glimmer-uikit.main-thread-smoke"]}
-           :repl-live-smoke {:extra-paths ["examples"] :main-opts ["-m" "glimmer-uikit.repl-live-smoke"]}
-           :keyed   {:extra-paths ["examples"] :main-opts ["-m" "glimmer-uikit.keyed"]}}
+ :aliases {:test    {:extra-paths ["test"]     :main-opts ["-m" "glimmer-appkit.test-runner"]}
+           :counter {:extra-paths ["examples"] :main-opts ["-m" "glimmer-appkit.counter"]}
+           :todo    {:extra-paths ["examples"] :main-opts ["-m" "glimmer-appkit.todo"]}
+           :smoke   {:extra-paths ["examples"] :main-opts ["-m" "glimmer-appkit.reactivity-smoke"]}
+           :main-thread-smoke {:extra-paths ["examples"] :main-opts ["-m" "glimmer-appkit.main-thread-smoke"]}
+           :repl-live-smoke {:extra-paths ["examples"] :main-opts ["-m" "glimmer-appkit.repl-live-smoke"]}
+           :keyed   {:extra-paths ["examples"] :main-opts ["-m" "glimmer-appkit.keyed"]}}
 
  :tasks {test    "jolt -M:test"
          counter "jolt -M:counter"
