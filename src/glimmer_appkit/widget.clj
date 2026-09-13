@@ -1,10 +1,10 @@
-(ns glimmer-uikit.widget
+(ns glimmer-appkit.widget
   "Hiccup -> AppKit views. A data-driven registry maps hiccup tags to view
   constructors, prop maps to AppKit setters, and :on-* event keys to handlers
   wired through the shared action/delegate target (a dynamic ObjC class whose
   method IMPs are jolt foreign-callables). This layer creates/patches views and
   manages container children; glimmer's reconciler decides when, reaching these
-  functions through the backend map in glimmer-uikit.core.
+  functions through the backend map in glimmer-appkit.core.
 
   Tag mapping (GTK widget -> AppKit view):
     :window    NSWindow                (single child, pinned to the content view)
@@ -27,7 +27,7 @@
   alignment wins), which matches every bundled example; :hexpand/:vexpand lower
   the child's content-hugging priority so it stretches along the stacking axis."
   (:require [clojure.string :as str]
-            [glimmer-uikit.ffi :as u]
+            [glimmer-appkit.ffi :as u]
             [hiccup2.core :as hiccup]
             [jolt.ffi :as ffi]))
 

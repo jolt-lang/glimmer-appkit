@@ -1,4 +1,4 @@
-(ns glimmer-uikit.ffi
+(ns glimmer-appkit.ffi
   "Raw bindings for the Objective-C runtime and AppKit, built on jolt.ffi.
 
   Objective-C from a C FFI: classes come from objc_getClass, selectors from
@@ -15,7 +15,7 @@
   AppKit.framework is dlopen'd here on macOS so its classes register
   (objc_getClass only finds classes in loaded frameworks). On other platforms
   the load is skipped and only the headless helpers (markup, with-orientation
-  in glimmer-uikit.widget) are usable — which is what the CI unit tests need.
+  in glimmer-appkit.widget) are usable — which is what the CI unit tests need.
 
   Marshalling: a C string crosses the FFI as :string (UTF-8); NSStrings are
   created with stringWithUTF8String: and read back with UTF8String. BOOL is
@@ -29,7 +29,7 @@
     (ffi/load-library "/System/Library/Frameworks/AppKit.framework/AppKit")
     (ffi/load-library "/System/Library/Frameworks/Foundation.framework/Foundation")
     (catch :default _
-      (println "glimmer-uikit: could not load AppKit.framework; headless helpers only"))))
+      (println "glimmer-appkit: could not load AppKit.framework; headless helpers only"))))
 
 ;; --- constants ---------------------------------------------------------------
 ;; NSWindowStyleMask: titled | closable | miniaturizable | resizable
@@ -161,12 +161,16 @@
   "CFStringCreateWithCString" [:pointer :string :int64] :pointer)
 
 (def ^:private kCFRunLoopDefaultMode
-  ;; kCFStringEncodingUTF8
-  (cf-string-create-with-cstring ffi/null "kCFRunLoopDefaultMode" 134217984))
+  ;; kCFStringEncodingUTF8. A delay, not a value: creating the string is a
+  ;; foreign call, and a foreign procedure resolves its entry the first time it
+  ;; runs. Made at load, this was the one call that ran on every platform --
+  ;; requiring the namespace on Linux raised "no entry for
+  ;; CFStringCreateWithCString" before any macOS guard could matter.
+  (delay (cf-string-create-with-cstring ffi/null "kCFRunLoopDefaultMode" 134217984)))
 
 (defn default-mode
   "The CFString naming the run loop's default mode (retained by the loop)."
-  [] kCFRunLoopDefaultMode)
+  [] @kCFRunLoopDefaultMode)
 
 ;; --- selector / class caches -------------------------------------------------
 (def ^:private sel-cache (atom {}))
@@ -208,6 +212,36 @@
 (defn shared-application [] (objc-msg-send-0 (cls "NSApplication") (sel "sharedApplication")))
 (defn set-activation-policy! [app v] (objc-msg-send-1i64void app (sel "setActivationPolicy:") v))
 (defn run-app! [app] (objc-msg-send-run app (sel "run")))
+
+;; --- uncaught Objective-C exceptions -----------------------------------------
+;; An NSException thrown inside an AppKit call (a constraint set up wrong, a
+;; selector a view does not answer) unwinds to objc_terminate and the process
+;; aborts: a native crash report, no jolt backtrace, nothing to catch. It
+;; cannot be turned into a jolt throwable from here -- the ObjC unwinder cannot
+;; cross the Chez frames between the throw and the foreign call, so nothing
+;; short of a C @try around objc_msgSend would let the call return -- but the
+;; runtime's uncaught-exception handler runs BEFORE the abort, and there the
+;; exception's name, reason and the jolt frames that made the call can still be
+;; written. So the report a user sees names the call, not just SIGABRT.
+(ffi/defcfn ns-set-uncaught-exception-handler "NSSetUncaughtExceptionHandler" [:pointer] :void)
+(defonce ^:private uncaught-report
+  (ffi/foreign-callable
+    (fn [exc]
+      (let [nm (try (nsstring->str (objc-msg-send-0 exc (sel "name"))) (catch :default _ "NSException"))
+            why (try (nsstring->str (objc-msg-send-0 exc (sel "reason"))) (catch :default _ ""))]
+        (binding [*out* *err*]
+          (println (str "glimmer-appkit: uncaught " nm ": " why))
+          (println "  the process aborts now; the Objective-C exception cannot be caught from jolt.")
+          (when-let [dump (resolve 'jolt.host/backtrace-string)]
+            (when-let [bt (try (dump) (catch :default _ nil))]
+              (println "  jolt trace:") (println bt)))
+          (flush))))
+    [:pointer] :void :collect-safe))
+(defn install-uncaught-exception-report!
+  "Have an uncaught NSException print its name, reason and the jolt trace
+  before the abort. Called by run!; harmless to call twice."
+  []
+  (ns-set-uncaught-exception-handler uncaught-report))
 (defn stop-app! [app] (objc-msg-send-1pvoid app (sel "stop:") ffi/null))
 (defn terminate-app! [app] (objc-msg-send-1pvoid app (sel "terminate:") ffi/null))
 (defn activate! [app] (objc-msg-send-1intvoid app (sel "activateIgnoringOtherApps:") 1))
@@ -383,7 +417,7 @@
     (cond (<= 48 n 57) (- n 48)
           (<= 97 n 102) (- n 87)
           (<= 65 n 70) (- n 55)
-          :else (throw (ex-info (str "glimmer-uikit: bad hex digit " c) {})))))
+          :else (throw (ex-info (str "glimmer-appkit: bad hex digit " c) {})))))
 (defn- hex->int [s] (reduce (fn [acc c] (+ (* acc 16) (hex-digit c))) 0 s))
 (defn color-hex
   "Parse \"#rrggbb\" (or \"#rgb\") into an NSColor."

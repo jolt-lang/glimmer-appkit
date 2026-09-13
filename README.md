@@ -1,8 +1,8 @@
-# glimmer-uikit
+# glimmer-appkit
 
 The **AppKit** backend for [glimmer](https://github.com/jolt-lang/glimmer), the
 reactive Clojure(-like) UI framework for [jolt](https://github.com/jolt-lang/jolt).
-Where glimmer-gtk renders into GTK4 windows on Linux, glimmer-uikit renders the
+Where glimmer-gtk renders into GTK4 windows on Linux, glimmer-appkit renders the
 same hiccup into real macOS windows — `NSWindow`/`NSStackView`/`NSButton`, driven
 through the Objective-C runtime by a plain C FFI (no bridging headers, no blocks).
 
@@ -15,7 +15,7 @@ through `glimmer.backend`.
 (ns myapp
   (:require [glimmer.ratom :refer [atom]]
             [glimmer.core :as ui]
-            [glimmer-uikit.core]))            ; installs the AppKit backend
+            [glimmer-appkit.core]))            ; installs the AppKit backend
 
 (defn counter []
   (let [count (atom 0)]
@@ -37,7 +37,7 @@ What follows is the AppKit-specific part: what you can put in the hiccup.
 ## Requirements
 
 macOS, with the Xcode command-line tools installed (for the Objective-C runtime).
-AppKit and CoreFoundation are loaded by `glimmer-uikit.ffi` at require time,
+AppKit and CoreFoundation are loaded by `glimmer-appkit.ffi` at require time,
 guarded to macOS only — nothing is declared under `:jolt/native`, so the headless
 test suite (`jolt -M:test`) runs on Linux CI, where no AppKit exists.
 
@@ -122,10 +122,10 @@ styles and `:span` sizes survive.
 
 ## Extending the widget set
 
-A consumer can teach glimmer-uikit new hiccup tags at load time:
+A consumer can teach glimmer-appkit new hiccup tags at load time:
 
 ```clojure
-(require '[glimmer-uikit.widget :as w])
+(require '[glimmer-appkit.widget :as w])
 
 (w/register-widget! :my-thing
   {:ctor      (fn [props] (make-the-view props))
@@ -136,25 +136,25 @@ A consumer can teach glimmer-uikit new hiccup tags at load time:
                     (fn [widget] (read-the-value widget)))  ; value-fn optional
 ```
 
-See `glimmer-uikit.widget` for the worked `:gl-area`-style examples (the registry
+See `glimmer-appkit.widget` for the worked `:gl-area`-style examples (the registry
 is the same open table glimmer-gtk uses).
 
 ## Architecture
 
 Three namespaces:
 
-- **`glimmer-uikit.ffi`** — the Objective-C runtime and AppKit, through `jolt.ffi`:
+- **`glimmer-appkit.ffi`** — the Objective-C runtime and AppKit, through `jolt.ffi`:
   `objc_getClass`/`sel_registerName`, `objc_msgSend` bound at fixed arities (struct
   args flattened into doubles — a `CGRect` is an HFA of four doubles, so a
   flattened window-init call passes exactly the registers a real method expects;
   never `:varargs`, which shifts FP args onto the stack and corrupts them), plus
   the CFRunLoop pieces the scheduler needs. No logic.
-- **`glimmer-uikit.widget`** — hiccup to AppKit: tag to constructor, props to
+- **`glimmer-appkit.widget`** — hiccup to AppKit: tag to constructor, props to
   setters, `:on-*` to target/action and delegate callbacks (a dynamic `GlimmerTarget`
   ObjC class whose IMPs are jolt `foreign-callable`s), Pango markup to
   `NSAttributedString`, and container child management. The tag and signal
   registries are open (`register-widget!`, `register-signal!`).
-- **`glimmer-uikit.core`** — the backend map handed to `glimmer.backend/register!`,
+- **`glimmer-appkit.core`** — the backend map handed to `glimmer.backend/register!`,
   the `NSApplication` app loop, and the scheduler that marshals off-main-thread
   work (an nREPL eval mutating a ratom) onto the main loop via a `CFRunLoopSource`
   — the AppKit analogue of GTK's `g_idle_add`, without libdispatch or blocks.

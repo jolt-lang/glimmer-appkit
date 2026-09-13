@@ -1,4 +1,4 @@
-(ns glimmer-uikit.repl-live-smoke
+(ns glimmer-appkit.repl-live-smoke
   "Regression smoke for live GUI development over nREPL.
 
   A label is bound to a ratom. A WORKER thread (standing in for an nREPL eval on
@@ -15,7 +15,7 @@
 
   Auto-quits and exits 0 printing SMOKE OK; non-zero on failure."
   (:require [glimmer.core :as ui]
-            [glimmer-uikit.core]
+            [glimmer-appkit.core]
             [glimmer.ratom :as r]
             [jolt.host :as host]))
 

@@ -1,8 +1,8 @@
-(ns glimmer-uikit.widget-test
+(ns glimmer-appkit.widget-test
   "Headless tests for the widget layer's pure functions. No AppKit needed —
   these exercise string logic only, so `jolt -M:test` runs on CI (Linux) too."
   (:require [clojure.test :refer [deftest is testing]]
-            [glimmer-uikit.widget :as w]))
+            [glimmer-appkit.widget :as w]))
 
 (deftest escape-markup-escapes-pango-significant-chars
   (testing "leaves plain text untouched"
@@ -15,7 +15,7 @@
     (is (= "&lt;b&gt;a &amp; b&lt;/b&gt;" (w/escape-markup "<b>a & b</b>")))))
 
 ;; markup: hiccup data -> Pango string, validated against Pango's vocabulary.
-;; See glimmer-uikit.widget/markup. Headless — no AppKit needed.
+;; See glimmer-appkit.widget/markup. Headless — no AppKit needed.
 (deftest markup-renders-pango-from-hiccup
   (testing "span with attributes"
     (is (= "<span foreground=\"#8e939d\">Nothing to do yet</span>"
