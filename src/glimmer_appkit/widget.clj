@@ -288,23 +288,31 @@
 (defonce ^:private terminate-cb
   (ffi/foreign-callable (fn [_ _ _] 1) [:pointer :pointer :pointer] :char :collect-safe))
 
-(defonce invoker
-  (let [existing (u/objc-get-class "GlimmerTarget")]
-    (if (and existing (not (ffi/null? existing)))
-      (u/objc-msg-send-0 existing (u/sel "new"))
-      (let [c (u/objc-allocate-class-pair (u/cls "NSObject") "GlimmerTarget" 0)]
-        (u/class-add-method c (u/sel "fire:") fire-cb "v@:@")
-        (u/class-add-method c (u/sel "controlTextDidChange:") change-cb "v@:@")
-        (u/class-add-method c (u/sel "autoQuit:") quit-cb "v@:@")
-        (u/class-add-method c (u/sel "applicationShouldTerminateAfterLastWindowClosed:") terminate-cb "c@:@")
-        (u/objc-register-class-pair c)
-        (u/objc-msg-send-0 c (u/sel "new"))))))
+(defonce ^:private target
+  ;; Built on first use, not at load: this namespace loads on Linux CI (the
+  ;; headless widget tests), where there is no Objective-C runtime to register
+  ;; a class with.
+  (delay
+   (let [existing (u/objc-get-class "GlimmerTarget")]
+     (if (and existing (not (ffi/null? existing)))
+       (u/objc-msg-send-0 existing (u/sel "new"))
+       (let [c (u/objc-allocate-class-pair (u/cls "NSObject") "GlimmerTarget" 0)]
+         (u/class-add-method c (u/sel "fire:") fire-cb "v@:@")
+         (u/class-add-method c (u/sel "controlTextDidChange:") change-cb "v@:@")
+         (u/class-add-method c (u/sel "autoQuit:") quit-cb "v@:@")
+         (u/class-add-method c (u/sel "applicationShouldTerminateAfterLastWindowClosed:") terminate-cb "c@:@")
+         (u/objc-register-class-pair c)
+         (u/objc-msg-send-0 c (u/sel "new")))))))
+
+(defn invoker
+  "The shared GlimmerTarget instance (created on first use)."
+  [] @target)
 
 (defn auto-quit!
   "Schedule the app to quit after `ms` (the :auto-quit-ms run option)."
   [app ms]
   (reset! auto-quit-app app)
-  (u/timer-after! ms invoker (u/sel "autoQuit:")))
+  (u/timer-after! ms (invoker) (u/sel "autoQuit:")))
 
 (defn connect-signals!
   "Wire every :on-* key in `props` on `widget`. Connected once at mount; a
@@ -312,11 +320,11 @@
   delegate callbacks are user-interaction-only), so nothing needs suppressing."
   [widget props]
   (when (or (:on-click props) (:on-toggled props) (:on-activate props))
-    (u/control-target! widget invoker)
+    (u/control-target! widget (invoker))
     (u/control-action! widget (u/sel "fire:")))
   (when-let [h (:on-change props)]
     (swap! changes assoc widget h)
-    (u/control-delegate! widget invoker))
+    (u/control-delegate! widget (invoker)))
   (when-let [h (:on-click props)]    (swap! actions assoc widget h))
   (when-let [h (:on-toggled props)]  (swap! actions assoc widget h))
   (when-let [h (:on-activate props)] (swap! actions assoc widget h)))
