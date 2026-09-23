@@ -106,7 +106,7 @@
         _    (u/install-uncaught-exception-report!)
         app  (u/shared-application)
         _    (u/set-activation-policy! app u/ACTIVATION-REGULAR)
-        _    (u/set-app-delegate! app w/invoker)
+        _    (u/set-app-delegate! app (w/invoker))
         win  (u/window-new title width height)
         _    (reset! current-mount (mount-root! win :window))
         _    (u/window-center! win)
