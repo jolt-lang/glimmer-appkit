@@ -6,7 +6,7 @@ Where glimmer-gtk renders into GTK4 windows on Linux, glimmer-appkit renders the
 same hiccup into real macOS windows — `NSWindow`/`NSStackView`/`NSButton`, driven
 through the Objective-C runtime by a plain C FFI (no bridging headers, no blocks).
 
-The whole toolkit fits in four namespaces. glimmer owns the reactive core
+The backend is three namespaces (see Architecture below). glimmer owns the reactive core
 (ratom, component model, reconciler) and knows nothing about AppKit; this project
 supplies the widgets, the prop/event wiring and the app loop, and registers them
 through `glimmer.backend`.
@@ -130,14 +130,18 @@ A consumer can teach glimmer-appkit new hiccup tags at load time:
 (w/register-widget! :my-thing
   {:ctor      (fn [props] (make-the-view props))
    :apply     (fn [widget props] (re-apply props on re-render))
+   :connect   (fn [widget props] (wire-its-events widget props))  ; optional, once at mount
    :container :none})          ; or :box / :window / :frame / :scrolled
 
-(w/register-signal! :on-input "value-changed"
-                    (fn [widget] (read-the-value widget)))  ; value-fn optional
+(w/register-signal! :on-input "value-changed")
 ```
 
-See `glimmer-appkit.widget` for the worked `:gl-area`-style examples (the registry
-is the same open table glimmer-gtk uses).
+`register-signal!` only marks an `:on-*` key as an event so re-renders don't
+treat it as a prop; the second argument is ignored (it keeps the GTK backend's
+call shape). AppKit has no generic signal to connect by name, so the widget's
+`:connect` function does the actual wiring. The built-in specs in
+`glimmer-appkit.widget` (`button-spec`, `entry-spec`, …) show the shape; the
+registry is the same open table glimmer-gtk uses.
 
 ## Architecture
 
